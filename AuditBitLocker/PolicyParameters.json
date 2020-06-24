@@ -1,0 +1,15 @@
+{
+    "ResourcePropertyName": "Name",
+    "DefaultValue": "winrm",
+    "AllowedValues": [
+        "BDESVC",
+        "TermService",
+        "wuauserv",
+        "winrm"
+    ],
+    "Description": "Name of the Windows Service to be audited.",
+    "ResourceId": "Ensure BitLocker service is present and running",
+    "ResourceType": "Service",
+    "DisplayName": "Windows service name",
+    "Name": "ServiceName"
+}
