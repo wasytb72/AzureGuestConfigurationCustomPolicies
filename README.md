@@ -8,19 +8,19 @@ After executing the script line by line, you will have a Policy Initiative that 
 
 If you create a Virtual Machine and assign the policy (including the remediation task) to a Virtual Machine, it will look like this first:
 
-![](/Images/GuestConfigurationstatus-Compliant.png)
+![](/Images/GuestConfigurationStatus-Compliant.png)
 
 You think it's compliant, but it's not. The system needs some time to install the Guest Configuration Policy on the machine. After a coupl of minutes, the deploy policy should be compliant while the Audit policy is still evaluating. 
 
-![](/Images/GuestConfigurationstatus-Pending.png)
+![](/Images/GuestConfigurationStatus-Pending.png)
 
 If you drill down on the policy, you can click on the compliance reason details (important: don't click the row but the button!)
 
-![](/Images/GuestConfigurationstatus-ComplianceReason.png)
+![](/Images/GuestConfigurationStatus-ComplianceReason.png)
 
 Now it all makes sense. Because the policy is still evaluating, the compliance status is also still 'Pending' and not 'Compliant'.
 
-![](/Images/GuestConfigurationstatus-PendingStatus.png)
+![](/Images/GuestConfigurationStatus-PendingStatus.png)
 
 If you logon on the Virtual Machine, you will see that a new log directory was created. If you open this log and search for "AuditBitLocker", you'll see why a resource is compliant or not. This status will also be reported back to Azure Guest Configuration so you can see it in the Azure Portal.
 
