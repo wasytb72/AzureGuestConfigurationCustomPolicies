@@ -172,6 +172,6 @@ Publish-GuestConfigurationPolicy -Path './AuditBitLocker/PolicyDefinitions' -Ver
 <# Cleanup the environment
     Remove-AzStorageAccount -Name $storageAccountName -ResourceGroupName $resourceGroupName
     Remove-AzResourceGroup -Name $resourceGroupName
-    Get-AzPolicyDefinition | Where-Object {$_.Properties.DisplayName -like "*Guest Configuration Demo - Audit BitLocker Service"} | Remove-AzPolicyDefinition
     Get-AzPolicySetDefinition | Where-Object {$_.Properties.DisplayName -like "*Guest Configuration Demo - Audit BitLocker Service"} | Remove-AzPolicySetDefinition
+    Get-AzPolicyDefinition | Where-Object {$_.Properties.DisplayName -like "*Guest Configuration Demo - Audit BitLocker Service"} | Remove-AzPolicyDefinition
 #>
