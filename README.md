@@ -6,23 +6,23 @@ After executing the script line by line, you will have a Policy Initiative that 
 
 ![](/Images/GuestConfigurationPolicyCreated.png)
 
+If you assign the initiative, you will see the two parameters that you can specify. Tip: if you want to monitor multiple services, just change the assignment name into something like `[Initiative] Guest Configuration Demo - Audit Windows Service 'winrm'`.
+
+![](/Images/GuestConfigurationParameters.png)
+
+Make sure to select the remediation task. Otherwise the prerequisites won't be deployed.
+
+![](/Images/GuestConfigurationRemediationTasks.png)
+
 If you create a Virtual Machine and assign the policy (including the remediation task) to a Virtual Machine, it will look like this first:
+
+![](/Images/GuestConfigurationStatus-Initial.png)
+
+After a couple of minutes it will look like this:
 
 ![](/Images/GuestConfigurationStatus-Compliant.png)
 
-You think it's compliant, but it's not. The system needs some time to install the Guest Configuration Policy on the machine. After a coupl of minutes, the deploy policy should be compliant while the Audit policy is still evaluating. 
-
-![](/Images/GuestConfigurationStatus-Pending.png)
-
-If you drill down on the policy, you can click on the compliance reason details (important: don't click the row but the button!)
-
-![](/Images/GuestConfigurationStatus-ComplianceReason.png)
-
-Now it all makes sense. Because the policy is still evaluating, the compliance status is also still 'Pending' and not 'Compliant'.
-
-![](/Images/GuestConfigurationStatus-PendingStatus.png)
-
-If you logon on the Virtual Machine, you will see that a new log directory was created. If you open this log and search for "AuditBitLocker", you'll see why a resource is compliant or not. This status will also be reported back to Azure Guest Configuration so you can see it in the Azure Portal.
+If you logon on the Virtual Machine, you will see that a new log directory was created. If you open this log and search for "AuditWindowsService", you'll see why a resource is compliant or not. This status will also be reported back to Azure Guest Configuration so you can see it in the Azure Portal.
 
 ![](/Images/GuestConfigurationStatus-LogFiles.png)
 
@@ -37,6 +37,4 @@ Get-Service winrm | Stop-Service
 Get-Service winrm | Set-Service -StartupType Disabled
 ````
 
-To quickly trigger the Azure Policy engine, you can create a tag on the VM and remove it so that the Azure Policy engine registers a change on the resource. Give it a couple of minutes and keep an eye on the `gc_worker.log` file again.
-
-![](/Images/GuestConfigurationStatus-FailLog.png)
+To quickly trigger the Azure Policy engine, you can create a tag on the VM and remove it so that the Azure Policy engine registers a change on the resource. Give it a couple of minutes and keep an eye on the `gc_worker.log` file again. It should report `"complianceStatus": false` soon.

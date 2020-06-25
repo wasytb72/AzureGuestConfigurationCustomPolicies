@@ -5,37 +5,37 @@
 
     Before you start, make sure you have the following folder structure set up:
     / New-GuestConfigPolicy.ps1
-    / AuditBitLockerPolicy / AuditBitLockerService.ps1
+    / AuditWindowsServicePolicy / AuditWindowsService.ps1
     
     By the end of the script, you should have the following folder structure:
     / New-GuestConfigPolicy.ps1
-    / AuditBitLockerPolicy / AuditBitLockerService.ps1
+    / AuditWindowsServicePolicy / AuditWindowsService.ps1
 
-    / AuditBitLockerPolicy / CompiledPolicy / AuditBitLocker.mof
-    / AuditBitLockerPolicy / Package / AuditBitlocker / AuditBitLocker.zip
-    / AuditBitLockerPolicy / Package / AuditBitlocker / unzippedPackage / AuditBitLocker.mof
-    / AuditBitLockerPolicy / Package / AuditBitlocker / unzippedPackage / Modules / **
-    / AuditBitLockerPolicy / PolicyDefinitions / AuditIfNotExists.json
-    / AuditBitLockerPolicy / PolicyDefinitions / DeployIfNotExists.json
-    / AuditBitLockerPolicy / PolicyDefinitions / Initiative.json
+    / AuditWindowsServicePolicy / CompiledPolicy / AuditWindowsService.mof
+    / AuditWindowsServicePolicy / Package / AuditWindowsService / AuditWindowsService.zip
+    / AuditWindowsServicePolicy / Package / AuditWindowsService / unzippedPackage / AuditWindowsService.mof
+    / AuditWindowsServicePolicy / Package / AuditWindowsService / unzippedPackage / Modules / **
+    / AuditWindowsServicePolicy / PolicyDefinitions / AuditIfNotExists.json
+    / AuditWindowsServicePolicy / PolicyDefinitions / DeployIfNotExists.json
+    / AuditWindowsServicePolicy / PolicyDefinitions / Initiative.json
 #>
 
 # Before you start, make sure your terminal is in the directory of the script, the GuestConfigPolicyWithParams folder
 # Install the Guest Configuration module. I've tested this demo on 1.19.4
 Install-Module -Name GuestConfiguration -RequiredVersion 1.19.4
 
-# Run AuditBitLockerService.ps1 first. You will now get the MOF file in AuditBitLockerPolicy/CompiledPolicy directory
-.\AuditBitLocker\AuditBitlockerService.ps1
+# Run AuditWindowsService.ps1 first. You will now get the MOF file in AuditWindowsServicePolicy/CompiledPolicy directory
+.\AuditWindowsService\AuditWindowsService.ps1
 
-# The following cmdlet will create the policy package in the AuditBitLocker/Package folder. It will create the AuditBitlocker.zip file and also the unzippedPackage folder
+# The following cmdlet will create the policy package in the AuditWindowsService/Package folder. It will create the AuditWindowsService.zip file and also the unzippedPackage folder
 New-GuestConfigurationPackage `
-    -Name 'AuditBitlocker' `
-    -Configuration './AuditBitLocker/CompiledPolicy/AuditBitlocker.mof' `
-    -Path './AuditBitLocker/Package'
+    -Name 'AuditWindowsService' `
+    -Configuration './AuditWindowsService/CompiledPolicy/AuditWindowsService.mof' `
+    -Path './AuditWindowsService/Package'
 
 # We can now test the package to ensure it's valid. Run this on the same type of machine as the policy target machine
 Test-GuestConfigurationPackage `
-    -Path './AuditBitLocker/Package/AuditBitlocker/AuditBitlocker.zip' 
+    -Path './AuditWindowsService/Package/AuditWindowsService/AuditWindowsService.zip' 
 
 # Now we need to upload the package to a Storage Account. We use the Publish-GuestConfigurationPackage function to accomplish this
 function Publish-GuestConfigPolicyPackageToStorage {
@@ -86,7 +86,7 @@ function Publish-GuestConfigPolicyPackageToStorage {
     return $SAS
 }
 
-<# Set these variables to a valid storage account or run the 3 lines of code to randomly generate a storage account name
+<# Set these variables to a valid storage account or run the 5 lines of code to randomly generate a storage account name
     $random = Get-Random -Minimum 10 -Maximum 1000
     $storageAccountName = "guestconfigdemo$random"
     $resourceGroupName = "guestconfigdemo$random"
@@ -95,25 +95,31 @@ function Publish-GuestConfigPolicyPackageToStorage {
 #>
 
 # Create a Resource Group to store the Storage Account
-New-AzResourceGroup -Name $resourceGroupName -Location $location
+if (!(Get-AzResourceGroup -Name $resourceGroupName -Location $location)) {
+    Write-Host "Resource Group '$($resourceGroupName)' does not exist in location '$($location)'. Creating now..."
+    New-AzResourceGroup -Name $resourceGroupName -Location $location
+}
 
 # Create a Storage Account
 # The storage account won't have any default allow permissions as we will use SAS tokens to provide the permissions
-$storageAccount = New-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName -SkuName Standard_LRS -Location $location -Kind StorageV2
+if (!(Get-AzStorageAccount -Name $storageAccountName -ResourceGroupName $resourceGroupName)) {
+    $storageAccount = New-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName -SkuName Standard_LRS -Location $location -Kind StorageV2
 
-# Set Storage Account Contributor permissions so that we can create containers and blobs
-New-AzRoleAssignment -SignInName $(Get-AzContext).Account -RoleDefinitionName "Storage Blob Data Contributor" -Scope $storageAccount.Id
+    # Set Storage Account Contributor permissions so that we can create containers and blobs
+    New-AzRoleAssignment -SignInName $(Get-AzContext).Account -RoleDefinitionName "Storage Blob Data Contributor" -Scope $storageAccount.Id
 
-# Create the container to store the policy package
-$storageAccount | New-AzStorageContainer -Name $containerName -Permission Off
+    # Create the container to store the policy package
+    $storageAccount | New-AzStorageContainer -Name $containerName -Permission Off
+}
 
 # Upload the policy package to Azure Storage
+$uri = $null
 $uri = Publish-GuestConfigPolicyPackageToStorage `
     -resourceGroup $resourceGroupName `
     -storageAccountName $storageAccountName `
     -storageContainerName $containerName `
-    -filePath ./AuditBitLocker/Package/AuditBitlocker/AuditBitlocker.zip `
-    -blobName 'AuditBitlocker'
+    -filePath ./AuditWindowsService/Package/AuditWindowsService/AuditWindowsService.zip `
+    -blobName 'AuditWindowsService'
 
 # Test if the URI works
 if ((Invoke-WebRequest $uri).Statuscode -ne 200) {
@@ -122,43 +128,49 @@ if ((Invoke-WebRequest $uri).Statuscode -ne 200) {
 
 # Define the policy parameters that we want to add to the policy.
 # As I like JSON, I'm importing the variables in JSON but you can also uncomment the array below
-$policyParameters = Get-Content ./AuditBitLocker/PolicyParameters.json | ConvertFrom-Json -AsHashtable
+$policyParameters = Get-Content ./AuditWindowsService/PolicyParameters.json | ConvertFrom-Json -AsHashtable
 
 <#
 $policyParameters = @(
     @{
-        Name = 'ServiceName'                                            # Policy parameter name (mandatory)
-        DisplayName = 'Windows service name.'                           # Policy parameter display name (mandatory)
-        Description = "Name of the Windows Service to be audited."      # Policy parameter description (optional)
-        ResourceType = "Service"                                        # DSC configuration resource type (mandatory). Get this value from the AuditBitlockerService.ps1 file.
-        ResourceId = 'Ensure BitLocker service is present and running'  # DSC configuration resource property name (mandatory). Get this value from the AuditBitlockerService.ps1 file.
-        ResourcePropertyName = "Name"                                   # DSC configuration resource property name (mandatory). Get this value from the AuditBitlockerService.ps1 file.
-        DefaultValue = 'winrm'                                          # Policy parameter default value (optional)
-        AllowedValues = @('BDESVC','TermService','wuauserv','winrm')    # Policy parameter allowed values (optional)
+        Name = 'ServiceName'                                         # Policy parameter name (mandatory)
+        DisplayName = 'Windows service name'                         # Policy parameter display name (mandatory)
+        Description = "Name of the Windows service"                  # Policy parameter description (optional)
+        ResourceType = "Service"                                     # DSC configuration resource type (mandatory). Get this value from the AuditWindowsService.ps1 file.
+        ResourceId = 'Ensure Windows service is in a desired state'  # DSC configuration resource property name (mandatory). Get this value from the AuditWindowsService.ps1 file.
+        ResourcePropertyName = "Name"                                # DSC configuration resource property name (mandatory). Get this value from the AuditWindowsService.ps1 file.
+        DefaultValue = 'winrm'                                       # Policy parameter default value (optional)
+        AllowedValues = @('BDESVC','TermService','wuauserv','winrm') # Policy parameter allowed values (optional)
+    },
+    @{
+        Name = 'ServiceStartupType'                                  # Policy parameter name (mandatory)
+        DisplayName = 'Windows service startup type'                 # Policy parameter display name (mandatory)
+        Description = "Startup type of the Windows service"          # Policy parameter description (optional)
+        ResourceType = "Service"                                     # DSC configuration resource type (mandatory). Get this value from the AuditWindowsService.ps1 file.
+        ResourceId = 'Ensure Windows service is in a desired state'  # DSC configuration resource property name (mandatory). Get this value from the AuditWindowsService.ps1 file.
+        ResourcePropertyName = "StartupType"                         # DSC configuration resource property name (mandatory). Get this value from the AuditWindowsService.ps1 file.
+        DefaultValue = 'Automatic'                                   # Policy parameter default value (optional)
+        AllowedValues = @('Automatic', 'Manual', 'Disabled')         # Policy parameter allowed values (optional)
     }
 )
 #>
 
 # Create the Guest Configuration Policy
-if (Get-ChildItem ./AuditBitLocker/PolicyDefinitions -ErrorAction SilentlyContinue) {
-    throw "There seems to be a bug in PowerShell that throws an error in the Guest Configuration module at line 1668. To fix it, remove the PolicyDefinitions folder manually. More info: https://github.com/PowerShell/PowerShell/issues/9246"
-}
-
 New-GuestConfigurationPolicy `
     -ContentUri $uri `
-    -DisplayName 'Guest Configuration Demo - Audit BitLocker Service' `
-    -Description 'Audit if BitLocker is not enabled on Windows machine.' `
-    -Path './AuditBitLocker/PolicyDefinitions' `
+    -DisplayName 'Guest Configuration Demo - Audit Windows Service' `
+    -Description 'Audit if a Windows Service is in a desired state.' `
+    -Path './AuditWindowsService/PolicyDefinitions' `
     -Platform 'Windows' `
     -Parameter $policyParameters `
     -Version 1.0.0 `
     -Verbose
 
 # Publish the Guest Configuration Policy
-Publish-GuestConfigurationPolicy -Path './AuditBitLocker/PolicyDefinitions' -Verbose
+Publish-GuestConfigurationPolicy -Path './AuditWindowsService/PolicyDefinitions' -Verbose
 
 # Display the Guest Configuration Policy
-(Get-AzPolicyDefinition | Where-Object {$_.Properties.DisplayName -like "*Guest Configuration Demo - Audit BitLocker Service"}).Properties
+(Get-AzPolicyDefinition | Where-Object {$_.Properties.DisplayName -like "*Guest Configuration Demo - Audit Windows Service"}).Properties
 
 # If you want to update a Guest Configuration policy, it should work just fine. You can see that the metadata property changes when the policy is updated:
 # createdOn=2020-06-24T09:25:43.0301822Z; updatedOn=2020-06-24T10:53:13.9929041Z
@@ -172,6 +184,6 @@ Publish-GuestConfigurationPolicy -Path './AuditBitLocker/PolicyDefinitions' -Ver
 <# Cleanup the environment
     Remove-AzStorageAccount -Name $storageAccountName -ResourceGroupName $resourceGroupName
     Remove-AzResourceGroup -Name $resourceGroupName
-    Get-AzPolicySetDefinition | Where-Object {$_.Properties.DisplayName -like "*Guest Configuration Demo - Audit BitLocker Service"} | Remove-AzPolicySetDefinition
-    Get-AzPolicyDefinition | Where-Object {$_.Properties.DisplayName -like "*Guest Configuration Demo - Audit BitLocker Service"} | Remove-AzPolicyDefinition
+    Get-AzPolicySetDefinition | Where-Object {$_.Properties.DisplayName -like "*Guest Configuration Demo - Audit Windows Service"} | Remove-AzPolicySetDefinition
+    Get-AzPolicyDefinition | Where-Object {$_.Properties.DisplayName -like "*Guest Configuration Demo - Audit Windows Service"} | Remove-AzPolicyDefinition
 #>

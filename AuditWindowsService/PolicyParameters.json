@@ -1,0 +1,31 @@
+[
+    {
+        "AllowedValues": [
+            "BDESVC",
+            "TermService",
+            "wuauserv",
+            "winrm"
+        ],
+        "Description": "Name of the Windows service",
+        "DefaultValue": "winrm",
+        "ResourceId": "Ensure Windows service is in a desired state",
+        "DisplayName": "Windows service name",
+        "ResourceType": "Service",
+        "Name": "ServiceName",
+        "ResourcePropertyName": "Name"
+    },
+    {
+        "AllowedValues": [
+            "Automatic",
+            "Manual",
+            "Disabled"
+        ],
+        "Description": "Startup type of the Windows service",
+        "DefaultValue": "Automatic",
+        "ResourceId": "Ensure Windows service is in a desired state",
+        "DisplayName": "Windows service startup type",
+        "ResourceType": "Service",
+        "Name": "ServiceStartupType",
+        "ResourcePropertyName": "StartupType"
+    }
+]

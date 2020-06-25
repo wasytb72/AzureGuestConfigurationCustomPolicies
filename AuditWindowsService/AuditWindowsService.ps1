@@ -2,19 +2,20 @@
 Install-Module 'PSDscResources' -Force
 
 # Define the DSC configuration and import GuestConfiguration
-Configuration AuditBitLocker
+Configuration AuditWindowsService
 {
     Import-DscResource -ModuleName 'PSDscResources'
 
-    Node AuditBitlocker {
-      Service 'Ensure BitLocker service is present and running'
+    Node AuditWindowsService {
+      Service 'Ensure Windows service is in a desired state'
       {
           Name = 'BDESVC'
           Ensure = 'Present'
           State = 'Running'
+          StartupType = 'Manual'
       }
     }
 }
 
 # Compile the configuration to create the MOF files
-AuditBitLocker -OutputPath ./AuditBitLocker/CompiledPolicy
+AuditWindowsService -OutputPath ./AuditWindowsService/CompiledPolicy
