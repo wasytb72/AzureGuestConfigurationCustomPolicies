@@ -95,14 +95,14 @@ function Publish-GuestConfigPolicyPackageToStorage {
 #>
 
 # Create a Resource Group to store the Storage Account
-if (!(Get-AzResourceGroup -Name $resourceGroupName -Location $location)) {
+if (!(Get-AzResourceGroup -Name $resourceGroupName -Location $location -ErrorAction SilentlyContinue)) {
     Write-Host "Resource Group '$($resourceGroupName)' does not exist in location '$($location)'. Creating now..."
     New-AzResourceGroup -Name $resourceGroupName -Location $location
 }
 
 # Create a Storage Account
 # The storage account won't have any default allow permissions as we will use SAS tokens to provide the permissions
-if (!(Get-AzStorageAccount -Name $storageAccountName -ResourceGroupName $resourceGroupName)) {
+if (!(Get-AzStorageAccount -Name $storageAccountName -ResourceGroupName $resourceGroupName  -ErrorAction SilentlyContinue)) {
     $storageAccount = New-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName -SkuName Standard_LRS -Location $location -Kind StorageV2
 
     # Set Storage Account Contributor permissions so that we can create containers and blobs
