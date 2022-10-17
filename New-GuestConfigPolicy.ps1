@@ -25,17 +25,18 @@
 Install-Module -Name GuestConfiguration -RequiredVersion 1.19.4
 
 # Run AuditWindowsService.ps1 first. You will now get the MOF file in AuditWindowsServicePolicy/CompiledPolicy directory
-.\AuditWindowsService\AuditWindowsService.ps1
+# Does only works with PWSH 5.1
+.\AuditWindowsRegistry\AuditWindowsRegistry.ps1
 
 # The following cmdlet will create the policy package in the AuditWindowsService/Package folder. It will create the AuditWindowsService.zip file and also the unzippedPackage folder
 New-GuestConfigurationPackage `
-    -Name 'AuditWindowsService' `
-    -Configuration './AuditWindowsService/CompiledPolicy/AuditWindowsService.mof' `
-    -Path './AuditWindowsService/Package'
+    -Name 'AuditWindowsRegistry' `
+    -Configuration './AuditWindowsRegistry/CompiledPolicy/AuditWindowsRegistry.mof' `
+    -Path './AuditWindowsRegistry/Package'
 
 # We can now test the package to ensure it's valid. Run this on the same type of machine as the policy target machine
 Test-GuestConfigurationPackage `
-    -Path './AuditWindowsService/Package/AuditWindowsService/AuditWindowsService.zip' 
+    -Path './AuditWindowsRegistry/Package/AuditWindowsRegistry/AuditWindowsRegistry.zip' 
 
 # Now we need to upload the package to a Storage Account. We use the Publish-GuestConfigurationPackage function to accomplish this
 function Publish-GuestConfigPolicyPackageToStorage {
@@ -93,6 +94,12 @@ function Publish-GuestConfigPolicyPackageToStorage {
     $containerName = "policies"
     $location = "westeurope"
 #>
+# Set these variables to a valid storage account or run the 5 lines of code to randomly generate a storage account name
+    $random = Get-Random -Minimum 10 -Maximum 1000
+    $storageAccountName = "guestconfigdemo$random"
+    $resourceGroupName = "guestconfigdemo$random"
+    $containerName = "policies"
+    $location = "westeurope"
 
 # Create a Resource Group to store the Storage Account
 if (!(Get-AzResourceGroup -Name $resourceGroupName -Location $location -ErrorAction SilentlyContinue)) {
@@ -106,7 +113,7 @@ if (!(Get-AzStorageAccount -Name $storageAccountName -ResourceGroupName $resourc
     $storageAccount = New-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName -SkuName Standard_LRS -Location $location -Kind StorageV2
 
     # Set Storage Account Contributor permissions so that we can create containers and blobs
-    New-AzRoleAssignment -SignInName $(Get-AzContext).Account -RoleDefinitionName "Storage Blob Data Contributor" -Scope $storageAccount.Id
+    New-AzRoleAssignment -SignInName $(Get-AzContext).Account.Id -RoleDefinitionName "Storage Blob Data Contributor" -Scope $storageAccount.Id
 
     # Create the container to store the policy package
     $storageAccount | New-AzStorageContainer -Name $containerName -Permission Off
@@ -118,8 +125,8 @@ $uri = Publish-GuestConfigPolicyPackageToStorage `
     -resourceGroup $resourceGroupName `
     -storageAccountName $storageAccountName `
     -storageContainerName $containerName `
-    -filePath ./AuditWindowsService/Package/AuditWindowsService/AuditWindowsService.zip `
-    -blobName 'AuditWindowsService'
+    -filePath ./AuditWindowsRegistry/Package/AuditWindowsRegistry/AuditWindowsRegistry.zip `
+    -blobName 'AuditWindowsRegistry'
 
 # Test if the URI works
 if ((Invoke-WebRequest $uri).Statuscode -ne 200) {
@@ -128,7 +135,7 @@ if ((Invoke-WebRequest $uri).Statuscode -ne 200) {
 
 # Define the policy parameters that we want to add to the policy.
 # As I like JSON, I'm importing the variables in JSON but you can also uncomment the array below
-$policyParameters = Get-Content ./AuditWindowsService/PolicyParameters.json | ConvertFrom-Json -AsHashtable
+$policyParameters = Get-Content ./AuditWindowsRegistry/PolicyParameters.json | ConvertFrom-Json -AsHashtable
 
 <#
 $policyParameters = @(
@@ -156,21 +163,20 @@ $policyParameters = @(
 #>
 
 # Create the Guest Configuration Policy
+$PolicyID = New-Guid
 New-GuestConfigurationPolicy `
     -ContentUri $uri `
-    -DisplayName 'Guest Configuration Demo - Audit Windows Service' `
-    -Description 'Audit if a Windows Service is in a desired state.' `
-    -Path './AuditWindowsService/PolicyDefinitions' `
+    -DisplayName 'Guest Configuration Demo - Audit Windows Registry' `
+    -Description 'Audit if a Windows Registry Key is in a desired state.' `
+    -Path './AuditWindowsRegistry/PolicyDefinitions' `
     -Platform 'Windows' `
     -Parameter $policyParameters `
-    -Version 1.0.0 `
-    -Verbose
 
 # Publish the Guest Configuration Policy
-Publish-GuestConfigurationPolicy -Path './AuditWindowsService/PolicyDefinitions' -Verbose
+Publish-GuestConfigurationPolicy -Path './AuditWindowsRegistry/PolicyDefinitions' -Verbose
 
 # Display the Guest Configuration Policy
-(Get-AzPolicyDefinition | Where-Object {$_.Properties.DisplayName -like "*Guest Configuration Demo - Audit Windows Service"}).Properties
+(Get-AzPolicyDefinition | Where-Object {$_.Properties.DisplayName -like "*Guest Configuration Demo - Audit Windows Registry"}).Properties
 
 # If you want to update a Guest Configuration policy, it should work just fine. You can see that the metadata property changes when the policy is updated:
 # createdOn=2020-06-24T09:25:43.0301822Z; updatedOn=2020-06-24T10:53:13.9929041Z
