@@ -96,8 +96,8 @@ function Publish-GuestConfigPolicyPackageToStorage {
 #>
 # Set these variables to a valid storage account or run the 5 lines of code to randomly generate a storage account name
     $random = Get-Random -Minimum 10 -Maximum 1000
-    $storageAccountName = "guestconfigdemo$random"
-    $resourceGroupName = "guestconfigdemo$random"
+    $storageAccountName = "guestconfigdemo983"
+    $resourceGroupName = "guestconfigdemo983"
     $containerName = "policies"
     $location = "westeurope"
 
@@ -170,7 +170,7 @@ New-GuestConfigurationPolicy `
     -Description 'Audit if a Windows Registry Key is in a desired state.' `
     -Path './AuditWindowsRegistry/PolicyDefinitions' `
     -Platform 'Windows' `
-    -Parameter $policyParameters `
+    -Parameter $policyParameters
 
 # Publish the Guest Configuration Policy
 Publish-GuestConfigurationPolicy -Path './AuditWindowsRegistry/PolicyDefinitions' -Verbose

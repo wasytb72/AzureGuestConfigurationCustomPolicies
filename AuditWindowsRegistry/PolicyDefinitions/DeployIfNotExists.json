@@ -163,7 +163,7 @@
                             },
                             {
                                 "field": "Microsoft.GuestConfiguration/guestConfigurationAssignments/contentHash",
-                                "equals": "D15A9883A8F4AA9BC7C01FCEF7EF9CD23268065594BE24B0DECDC033D55AA0A6"
+                                "equals": "1BD54F514BAE771C5D636FF500914D2593EC10087C098343A67E1FA53C82B625"
                             }
                         ]
                     },
@@ -181,10 +181,10 @@
                                     "value": "AuditWindowsRegistry"
                                 },
                                 "contentUri": {
-                                    "value": "https://guestconfigdemo983.blob.core.windows.net/policies/AuditWindowsRegistry?sv=2019-07-07&sr=b&sig=TxOpzyKfnT8z1BLrzopmYoNqvR9OFNyUn43J0IIlXy0%3D&st=2022-10-17T11%3A12%3A49Z&se=2025-10-17T11%3A12%3A49Z&sp=rl"
+                                    "value": "https://guestconfigdemo983.blob.core.windows.net/policies/AuditWindowsRegistry?sv=2019-07-07&sr=b&sig=sCoOoYJ2ZvFlJrV5QEsEFQCs2SOcvA5giOHkMktnJ0M%3D&st=2022-10-18T14%3A29%3A42Z&se=2025-10-18T14%3A29%3A42Z&sp=rl"
                                 },
                                 "contentHash": {
-                                    "value": "D15A9883A8F4AA9BC7C01FCEF7EF9CD23268065594BE24B0DECDC033D55AA0A6"
+                                    "value": "1BD54F514BAE771C5D636FF500914D2593EC10087C098343A67E1FA53C82B625"
                                 },
                                 "Verify Registry key for compliance": {
                                     "value": "[parameters('Verify Registry key for compliance')]"

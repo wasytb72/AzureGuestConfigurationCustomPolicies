@@ -1,3 +1,6 @@
 /AuditWindowsService/CompiledPolicy
 /AuditWindowsService/Package
 /AuditWindowsService/PolicyDefinitions
+/AuditWindowsRegistry/CompiledPolicy
+/AuditWindowsRegistry/Package
+/AuditWindowsRegistry/PolicyDefinitions

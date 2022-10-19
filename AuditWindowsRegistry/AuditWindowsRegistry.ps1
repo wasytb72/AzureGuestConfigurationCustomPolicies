@@ -13,6 +13,7 @@ Configuration AuditWindowsRegistry
           Ensure = 'Present'
           ValueName = 'TestValue'
           ValueData = 'TestData'
+          ValueType = 'String'  
       }
     }
 }
